@@ -26,27 +26,3 @@
 }
 ```
 
-### **What This Configuration Does:**
-
-* **`builds`**: This section tells Vercel how to build your project.
-    * The first part tells Vercel to find your Python file at `backend/app/main.py` and prepare it as a Python serverless function.
-    * The second part tells Vercel to find your frontend's `package.json` file and run the standard build process (`npm run build`), which will create a `dist` folder.
-* **`routes`**: This is the most important part. It directs incoming traffic.
-    * The first rule says, "If a request comes in for any URL starting with `/api/`, send it to the Python backend to be processed."
-    * The second rule says, "For any other URL, serve the corresponding file from the frontend's `dist` folder."
-
-### **Final Project Structure**
-
-Your final project structure should now look like this, with the new `vercel.json` file in the root.
-
-
-```
-skillsprint/
-├── backend/
-│   ├── app/
-│   │   └── main.py
-│   └── ...
-├── frontend/
-│   ├── src/
-│   └── package.json
-└── vercel.json      <-- YOUR NEW CONFIGURATION FILE
