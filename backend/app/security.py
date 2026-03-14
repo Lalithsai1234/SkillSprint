@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional
+import os
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -11,9 +12,9 @@ from . import models, schemas
 from .database import get_db
 
 # --- Configuration ---
-SECRET_KEY = "your-super-secret-key"  # It's better to load this from an environment variable
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+SECRET_KEY = os.getenv("SECRET_KEY", "your-super-secret-key")
+ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 
 # --- Password Hashing ---
 # Use pbkdf2_sha256 to avoid platform-specific bcrypt issues
