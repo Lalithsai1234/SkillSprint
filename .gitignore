@@ -60,3 +60,5 @@ skillsprint.db
 skillsprint.db.bak
 migration/render_env_backup.txt
 db_backups/
+.vercel
+.env*.local
