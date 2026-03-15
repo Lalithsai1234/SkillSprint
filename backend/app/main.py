@@ -4,6 +4,7 @@ import logging
 import asyncio
 import signal
 import traceback
+from sqlalchemy import inspect, text
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, SessionLocal
@@ -50,6 +51,30 @@ app.add_middleware(
 
 
 # --- Auto-seed on first boot (for environments without shell) ---
+def ensure_challenges_is_active_column():
+    """Backfill schema drift where old DBs miss challenges.is_active.
+    Safe to run on every startup.
+    """
+    try:
+        inspector = inspect(engine)
+        if "challenges" not in inspector.get_table_names():
+            return
+
+        existing_cols = {c["name"] for c in inspector.get_columns("challenges")}
+        if "is_active" in existing_cols:
+            return
+
+        dialect = engine.dialect.name
+        with engine.begin() as conn:
+            if dialect == "postgresql":
+                conn.execute(text("ALTER TABLE challenges ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT TRUE"))
+            else:
+                conn.execute(text("ALTER TABLE challenges ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT 1"))
+        logger.info("Schema fix applied: added challenges.is_active")
+    except Exception as e:
+        logger.warning(f"Could not ensure challenges.is_active column: {e}")
+
+
 @app.on_event("startup")
 def ensure_seed_data():
     """Create tables and seed the database with default challenges on startup.
@@ -61,6 +86,9 @@ def ensure_seed_data():
         print("Creating all tables with current schema...")
         Base.metadata.create_all(bind=engine)
         print("Database tables initialized")
+
+        # Ensure legacy deployments are upgraded before seeding queries run.
+        ensure_challenges_is_active_column()
         
         # Seed challenges
         inserted = seed_database()
